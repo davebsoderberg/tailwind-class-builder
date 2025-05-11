@@ -44,6 +44,28 @@ export function DownshiftCommandMenu() {
     return baseName.replace(/<[^>]*>/, customValue)
   }
 
+  // Function to highlight matching text
+  const highlightMatch = (text: string, query: string) => {
+    if (!query.trim()) return <>{text}</>
+
+    const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "gi")
+    const parts = text.split(regex)
+
+    return (
+      <>
+        {parts.map((part, i) =>
+          regex.test(part) ? (
+            <span key={i} className="text-blue-500">
+              {part}
+            </span>
+          ) : (
+            <span key={i}>{part}</span>
+          ),
+        )}
+      </>
+    )
+  }
+
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([])
   const [inputValue, setInputValue] = useState("")
   const debouncedInputValue = useDebounce(inputValue, 300)
@@ -367,7 +389,7 @@ export function DownshiftCommandMenu() {
           )}
 
           {!isLoading && debouncedInputValue && flattenedItems.length > 0 && (
-            <div ref={listRef} className="max-h-[300px] overflow-y-auto">
+            <div ref={listRef} className="max-h-[300px] overflow-y-auto pb-1">
               <div
                 style={{
                   height: `${rowVirtualizer.getTotalSize()}px`,
@@ -396,9 +418,7 @@ export function DownshiftCommandMenu() {
                     >
                       {item.type === "group" && (
                         <div className="-mt-1 pt-2 text-xs font-medium text-gray-500">
-                          <div className={`px-4 -mx-2 pt-4 ${
-                            virtualRow.index === 0 ? "" : "border-t"
-                          }`}>
+                          <div className={`px-4 -mx-2 pt-4 ${virtualRow.index === 0 ? "" : "border-t"}`}>
                             {item.groupName}
                           </div>
                         </div>
@@ -410,9 +430,13 @@ export function DownshiftCommandMenu() {
                             <div
                               className={`${hasAngleBrackets(item.classItem.item) ? "text-blue-600 font-medium" : ""}`}
                             >
-                              {item.classItem.item}
+                              {hasAngleBrackets(item.classItem.item)
+                                ? item.classItem.item
+                                : highlightMatch(item.classItem.item, debouncedInputValue)}
                             </div>
-                            <div className="text-xs text-gray-400 truncate max-w-[50%]">{item.classItem.item_meta}</div>
+                            <div className="text-xs text-gray-400 truncate max-w-[50%]">
+                              {highlightMatch(item.classItem.item_meta, debouncedInputValue)}
+                            </div>
                           </div>
                         </div>
                       )}
